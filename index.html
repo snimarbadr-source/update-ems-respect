@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تحديث مركز العمليات للصحة — مستشفى ريسبكت</title>
+  <meta name="description" content="لوحة توزيع وحدات الإسعاف مع قراءة أسماء/أكواد من صورة ونسخ النموذج النهائي." />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <style>
+
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --card2:#0e1730;
+      --text:#eaf0ff;
+      --muted:#aab6d6;
+      --border:rgba(255,255,255,.10);
+      --accent:#5eead4;
+      --accent2:#60a5fa;
+      --danger:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(96,165,250,.25), transparent 60%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(94,234,212,.20), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    a{color:var(--accent2)}
+
+    .wrap{max-width:1200px; margin:0 auto; padding:24px}
+
+    /* ---- Brand header ---- */
+.heroHeader{
+  margin-bottom:18px;
+  padding:18px 16px;
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:120px;
+}
+.heroHeader::before{
+  content:"";
+  position:absolute; inset:-40px;
+  background: radial-gradient(600px 220px at 20% 0%, rgba(250,204,21,.18), transparent 60%),
+              radial-gradient(520px 240px at 85% 10%, rgba(96,165,250,.18), transparent 60%);
+  filter: blur(2px);
+  pointer-events:none;
+}
+
+.heroInner{
+  position:relative;
+  z-index:1;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 120px;
+}
+
+.heroLogo{
+  width:92px;
+  height:92px;
+  object-fit:contain;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.45));
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  animation: heroFloaty 3.6s ease-in-out infinite;
+  pointer-events:none;
+}
+.heroLogo.start{ inset-inline-start: 14px; }
+.heroLogo.end{ inset-inline-end: 14px; animation-delay:.35s; }
+
+@media (max-width: 720px){
+  .heroHeader{min-height:104px; padding:16px 12px}
+  .heroInner{padding:0 86px}
+  .heroLogo{width:68px; height:68px}
+}
+
+/* إصلاح تداخل العنوان/الأزرار/الشعارات في الجوال بالطول (شاشات ضيقة جدًا) */
+@media (max-width: 430px){
+  .heroHeader{min-height:150px; padding:14px 10px 52px}
+  .heroInner{padding:0 74px}
+  .heroLogo{width:54px; height:54px}
+  .brandTitle{white-space:normal; font-size:20px; line-height:1.15}
+  .brandSub{font-size:12px}
+
+  /* الانترو: تقليل أحجام الشعار وتوسيع النص لتفادي التداخل */
+  .introOverlay{padding:12px}
+  .introCard{padding:14px}
+  .introInner{grid-template-columns:54px 1fr 54px; gap:8px}
+  .brandLogo{width:54px; height:54px}
+  .introHint{font-size:12px}
+
+  /* زر الشرح ينتقل للأسفل بالمنتصف لتفادي تداخله مع الشعار */
+  .helpBtn{
+    top:auto;
+    bottom:12px;
+    left:50%;
+    right:auto;
+    inset-inline-start:auto;
+    inset-inline-end:auto;
+    transform: translateX(-50%);
+    padding:8px 14px;
+  }
+  .helpBtn:hover{transform: translateX(-50%) translateY(-1px)}
+  .helpBtn:active{transform: translateX(-50%) translateY(0)}
+}
+
+.brandTitleWrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+.brandTitle{
+  margin:0;
+  font-size:clamp(20px, 3.0vw, 34px);
+  letter-spacing:.2px;
+  font-weight:950;
+  white-space:nowrap;       /* مهم: يمنع العنوان من التحول لطولي */
+  line-height:1.1;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.98) 0%,
+    rgba(250,204,21,.98) 40%,
+    rgba(255,255,255,.98) 80%);
+  background-size: 200% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation: riseIn .65s ease both, shimmer 6.4s linear infinite;
+  filter: drop-shadow(0 12px 26px rgba(0,0,0,.45));
+}
+.brandSub{
+  color: rgba(255,255,255,.86);
+  font-size:13px;
+  animation: fadeIn .75s ease .15s both;
+}
+
+
+.helpBtn{
+  position:absolute;
+  z-index:2;
+  inset-inline-start: 14px;
+  top:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  line-height:1;
+  height:auto;
+  backdrop-filter: blur(6px);
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.helpBtn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.26); background: rgba(255,255,255,.10)}
+.helpBtn:active{transform: translateY(0)}
+
+@keyframes riseIn{from{opacity:0; transform: translateY(10px)} to{opacity:1; transform: translateY(0)}}
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+@keyframes shimmer{0%{background-position: 0% 50%} 100%{background-position: 200% 50%}}
+@keyframes heroFloaty{
+  0%,100%{transform: translateY(-50%) translateY(0)}
+  50%{transform: translateY(-50%) translateY(-6px)}
+}
+
+/* ---- Intro overlay ---- */
+    .introOverlay{
+      position:fixed;
+      inset:0;
+      z-index:2000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:
+        radial-gradient(900px 600px at 20% 10%, rgba(250,204,21,.14), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(96,165,250,.18), transparent 60%),
+        rgba(3, 6, 14, .88);
+      backdrop-filter: blur(8px);
+      overflow:hidden;
+    }
+    .introOverlay.hide{animation: introOut .65s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes introOut{to{opacity:0; transform: translateY(-10px) scale(1.01); pointer-events:none}}
+    .introNames{position:absolute; inset:0; pointer-events:none; opacity:.32}
+    .introName{
+      position:absolute;
+      color: rgba(255,255,255,.95);
+      font-weight:800;
+      letter-spacing:.2px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.45);
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.45));
+      animation: drift 6.5s ease-in-out infinite;
+      white-space:nowrap;
+      user-select:none;
+    }
+    @keyframes drift{0%,100%{transform: translateY(0)} 50%{transform: translateY(-14px)}}
+    .introCard{
+      width:min(920px, 100%);
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.26));
+      border-radius:22px;
+      box-shadow:0 40px 120px rgba(0,0,0,.55);
+      padding:18px;
+      position:relative;
+      z-index:2;
+    }
+    .introInner{position:relative; z-index:1; display:grid; grid-template-columns: 120px 1fr 120px; align-items:center; gap:12px;}
+    @media (max-width: 720px){
+      .introInner{grid-template-columns: 86px 1fr 86px}
+    }
+
+@media (max-width: 430px){
+  .introCard{padding:14px}
+  .introInner{grid-template-columns: 56px 1fr 56px; gap:8px}
+  .brandLogo{width:54px; height:54px}
+  .introHint{font-size:12px}
+}
+
+.brandLogo{
+  width:92px;
+  height:92px;
+  object-fit:contain;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.45));
+  animation: floaty 3.6s ease-in-out infinite;
+}
+.brandLogo.right{animation-delay:.35s}
+@media (max-width: 720px){
+  .brandLogo{width:68px; height:68px}
+}
+@keyframes floaty{0%,100%{transform: translateY(0)} 50%{transform: translateY(-6px)}}
+
+    .introHint{margin-top:10px; color:rgba(255,255,255,.78); font-size:13px; text-align:center}
+    .introHint .kbd{background:rgba(255,255,255,.08)}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 22%),
+                  linear-gradient(0deg, rgba(0,0,0,.18), rgba(0,0,0,.18)),
+                  var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      overflow:hidden;
+    }
+    .card h2{margin:0 0 10px 0; font-size:15px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      outline:none;
+    }
+
+
+/* اجبار القوائم على الوضع الداكن (خاصة في Chrome/Windows) */
+html{ color-scheme: dark; }
+select{
+  background-color: rgba(10,16,32,.65);
+  color: var(--text);
+  color-scheme: dark;
+}
+select option{
+  background-color:#0b1020;
+  color:var(--text);
+}
+
+    textarea{min-height:90px; resize:vertical}
+
+    .field{flex:1; min-width:220px}
+    .field.small{min-width:160px; flex:0 0 160px}
+
+    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+
+    button{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    button:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.09)}
+    button:active{transform: translateY(0px)}
+    button.primary{border-color: rgba(94,234,212,.35); background: rgba(94,234,212,.12)}
+    button.primary:hover{background: rgba(94,234,212,.18)}
+    button.danger{border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10)}
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      background: rgba(96,165,250,.12);
+      border:1px solid rgba(96,165,250,.25);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--text);
+      white-space:nowrap;
+    }
+
+    .statusline{margin-top:10px; font-size:12px; color:var(--muted)}
+    .progress{height:8px; border-radius:999px; background: rgba(255,255,255,.08); overflow:hidden; margin-top:8px}
+    .progress > div{height:100%; width:0%; background: rgba(94,234,212,.7)}
+
+    table{width:100%; border-collapse:separate; border-spacing:0 8px;}
+    th{font-size:12px; color:var(--muted); font-weight:600; text-align:right; padding:0 10px}
+    td{padding:0 10px}
+
+    .tr{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .tr td{padding:10px}
+
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    .preview{
+      width:100%;
+      min-height:220px;
+      white-space:pre-wrap;
+      background: rgba(0,0,0,.18);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      color: var(--text);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.55}
+
+    .foot{
+      margin-top:14px;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      color:var(--muted); font-size:12px;
+    }
+
+    .kbd{border:1px solid var(--border); padding:2px 8px; border-radius:8px; background: rgba(255,255,255,.06)}
+
+    .toast{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      background: rgba(16,26,51,.92);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size:13px;
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1; transform: translateY(0)}
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 620px){
+      .split{grid-template-columns:1fr}
+    }
+
+    /* === Mobile portrait final fix (≤430px) ===
+       يمنع تداخل الانترو + العنوان + زر الشرح في الجوال بالطول بدون تغيير أي وظائف */
+    @media (max-width: 430px){
+      /* Header */
+      .heroHeader{min-height:auto; padding:14px 10px 16px}
+      .heroInner{padding:0 86px}
+      .heroLogo{width:56px; height:56px}
+      /* خفف الزحمة في الشاشات الضيقة: نخفي شعار اليسار (Laurel) ونبقي شعار اليمين */
+      .heroLogo.end{display:none}
+
+      .brandTitle{white-space:normal; font-size:22px; line-height:1.2}
+      .brandSub{font-size:12px}
+
+      /* زر الشرح: صغير ولا يتطاول، وننقله للطرف المقابل بعيدًا عن الشعار */
+      .helpBtn{
+        inset-inline-start:auto;
+        inset-inline-end:10px;
+        top:10px;
+        bottom:auto;
+        left:auto;
+        right:auto;
+        transform:none;
+        padding:8px 12px;
+      }
+
+      /* Intro */
+      .introOverlay{padding:12px}
+      .introCard{width:min(520px, 96vw)}
+      .introInner{grid-template-columns:56px 1fr; gap:10px}
+      .introInner .brandLogo.right{display:none}
+      .brandLogo{width:56px; height:56px}
+      .introHint{font-size:12px}
+    }
+
+  
+
+    /* ---- New: Paste zone ---- */
+    .pasteZone{
+      border:1px dashed rgba(255,255,255,.22);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:12px;
+      color:var(--muted);
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:8px;
+    }
+    .pasteZone b{color:var(--text)}
+    .pasteZone .small{font-size:12px; color:var(--muted)}
+    .pasteZone.ok{border-color:rgba(94,234,212,.45); box-shadow:0 0 0 4px rgba(94,234,212,.08) inset}
+    .previewRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px}
+    .imgThumb{
+      width:64px; height:64px; border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.25);
+      object-fit:cover;
+    }
+
+    /* ---- New: Circular progress ---- */
+    .progWrap{display:flex; align-items:center; gap:10px; margin-top:10px}
+    .progCircle{
+      width:56px; height:56px; border-radius:999px;
+      background: conic-gradient(var(--accent) 0deg, rgba(255,255,255,.10) 0deg);
+      display:grid; place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      flex:0 0 auto;
+    }
+    .progInner{
+      width:44px; height:44px; border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.22));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid; place-items:center;
+      color:var(--text);
+      font-weight:800;
+      font-size:12px;
+      letter-spacing:.2px;
+    }
+    .progText{color:var(--muted); font-size:12px}
+
+    /* ---- New: Crop panel (toggle) ---- */
+    .cropWrap{margin-top:12px; border:1px solid var(--border); border-radius:16px; overflow:hidden; display:none}
+    .cropWrap.open{display:block}
+    .cropHead{
+      padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      background:rgba(255,255,255,.03);
+      border-bottom:1px solid var(--border);
+    }
+    .cropHead h3{margin:0; font-size:13px}
+    .cropMeta{color:var(--muted); font-size:12px}
+    .cropArea{background:#050816; display:flex; justify-content:center; align-items:center}
+    #cropCanvas{max-width:100%; height:auto; display:block}
+    .cropBtns{display:flex; gap:10px; flex-wrap:wrap; padding:10px 12px}
+    .cropHint{padding:0 12px 12px; color:var(--muted); font-size:12px}
+
+    /* ---- New: Kanban ---- */
+    .kanban{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
+      gap:12px;
+      margin-top:12px;
+      align-items:start;
+    }
+    @media (max-width:1100px){
+      .kanban{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:680px){
+      .kanban{grid-template-columns:1fr}
+    }
+
+    .col{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      min-height:220px;
+    }
+    .colHead{
+      padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      background:rgba(255,255,255,.03);
+      border-bottom:1px solid var(--border);
+    }
+    .colHead b{font-size:13px}
+    .colHead .mini{color:var(--muted); font-size:12px}
+    .colBody{
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-height:160px;
+    }
+    .col.dropActive{outline:2px solid rgba(94,234,212,.45); box-shadow:0 0 0 4px rgba(94,234,212,.08) inset}
+    .unitCard{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px 10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.20);
+      cursor:grab;
+      user-select:none;
+    }
+    .unitTop{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
+    }
+    .unitLine{color:var(--text); font-weight:800; font-size:13px; line-height:1.25}
+    .unitLine span{color:var(--muted); font-weight:700}
+    .unitBtns{display:flex; gap:6px}
+    .iconBtn{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius:10px;
+      padding:6px 8px;
+      font-size:12px;
+    }
+    .iconBtn:hover{filter:brightness(1.12)}
+    .unitMeta{margin-top:8px; display:flex; gap:6px; flex-wrap:wrap}
+    .badge{
+      border:1px solid rgba(255,255,255,.12);
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--text);
+      background:rgba(255,255,255,.05);
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .badge.muted{color:var(--muted)}
+    .badge.dot::before{
+      content:"";
+      width:7px; height:7px; border-radius:999px;
+      background:rgba(255,255,255,.35);
+      display:inline-block;
+    }
+    .badge.green::before{background:rgba(74,222,128,.9)}
+    .badge.orange::before{background:rgba(251,146,60,.95)}
+    .badge.yellow::before{background:rgba(250,204,21,.95)}
+    .badge.purple::before{background:rgba(192,132,252,.95)}
+    .badge.blue::before{background:rgba(96,165,250,.95)}
+    .badge.teal::before{background:rgba(45,212,191,.95)}
+    .badge.gray::before{background:rgba(148,163,184,.95)}
+    .badge.red::before{background:rgba(248,113,113,.95)}
+
+    /* ---- Manual add ---- */
+    .addRow{display:grid; grid-template-columns: 1.2fr .7fr .8fr .9fr .9fr auto; gap:10px; margin-top:10px}
+    .addRow .field{margin:0}
+    @media (max-width:980px){
+      .addRow{grid-template-columns:1fr 1fr}
+      .addRow .btns{grid-column:1/-1}
+    }
+
+    /* ---- Toggle ---- */
+    .toggle{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .switch{
+      position:relative;
+      width:56px; height:30px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:999px;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top:3px; right:3px;
+      width:24px; height:24px;
+      border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.08));
+      border:1px solid rgba(255,255,255,.18);
+      transition:transform .18s ease;
+      transform:translateX(0);
+    }
+    .switch.on{
+      background:rgba(94,234,212,.18);
+      border-color:rgba(94,234,212,.35);
+    }
+    .switch.on::after{transform:translateX(-26px)}
+    .switchLabel{font-size:13px; color:var(--muted)}
+    .switchLabel b{color:var(--text)}
+    
+    /* ---- Modal ---- */
+    .overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+      z-index:999;
+    }
+    .modal{
+      width:min(820px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.20)),
+                var(--card);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      padding:14px;
+    }
+    .modalHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .modalHead button{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    
+    textarea.big{
+      min-height:260px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      line-height:1.55;
+      white-space:pre;
+    }
+
+/* ---- Tour (شرح تفاعلي) ---- */
+.tourOverlay{
+  position:fixed;
+  inset:0;
+  z-index:2600;
+  display:none;
+}
+.tourDim{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  }
+.tourHighlight{
+  position:absolute;
+  border:2px solid rgba(94,234,212,.92);
+  border-radius:16px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.62);
+  transition: all .18s ease;
+  pointer-events:none;
+}
+.tourTooltip{
+  position:absolute;
+  width:min(520px, calc(100vw - 24px));
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.28));
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:18px;
+  padding:12px 12px 10px;
+  box-shadow:0 30px 80px rgba(0,0,0,.55);
+  color:var(--text);
+}
+.tourTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+}
+.tourStep{
+  font-size:12px;
+  color:rgba(255,255,255,.75);
+  font-weight:800;
+}
+.tourClose{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  padding:0;
+}
+.tourTitle{
+  margin:0 0 6px 0;
+  font-size:14px;
+  font-weight:950;
+  letter-spacing:.2px;
+}
+.tourBody{
+  margin:0;
+  color:rgba(255,255,255,.86);
+  font-size:13px;
+  line-height:1.65;
+  white-space:pre-wrap;
+}
+.tourBtns{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+.tourBtns button{
+  padding:9px 11px;
+  border-radius:12px;
+}
+
+  
+/* Mobile move buttons (touch mode) */
+.moveBar{ display:none; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.moveBtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  padding:6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+}
+.moveBtn:active{ transform: translateY(1px); }
+.touch .moveBar{ display:flex; }
+.touch .unitCard{ cursor: default; }
+.touch .unitCard[draggable="true"]{ draggable:false; }
+
+  /* === Mobile portrait: fix header/intro overlap, keep BOTH logos (final) === */
+  @media (max-width: 520px){
+    .heroHeader{
+      min-height:auto;
+      padding:14px 12px 16px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+    }
+    .helpBtn{
+      position:static !important;
+      inset:auto !important;
+      top:auto !important;
+      left:auto !important;
+      right:auto !important;
+      bottom:auto !important;
+      transform:none !important;
+      margin:0 auto;
+      min-width:74px;
+      padding:10px 14px;
+      height:auto;
+      white-space:nowrap;
+      line-height:1;
+      backdrop-filter:none;
+    }
+    .heroInner{
+      position:static;
+      padding:0;
+      display:grid;
+      grid-template-columns:52px 1fr 52px;
+      gap:10px;
+      align-items:center;
+      justify-items:center;
+      text-align:center;
+    }
+    .heroLogo{
+      position:static;
+      top:auto;
+      transform:none;
+      animation:none;
+      width:52px;
+      height:52px;
+    }
+    .heroLogo.start, .heroLogo.end{display:block !important;}
+    .brandTitle{white-space:normal; font-size:20px; line-height:1.2}
+    .brandSub{font-size:12px}
+
+    /* Intro */
+    .introOverlay{padding:12px}
+    .introCard{width:min(520px, 92vw)}
+    .introInner{grid-template-columns:48px 1fr 48px; gap:10px; align-items:center}
+    .brandLogo{width:48px; height:48px}
+  }
+
+  @media (max-width: 360px){
+    .heroInner{grid-template-columns:44px 1fr 44px}
+    .heroLogo{width:44px; height:44px}
+    .brandTitle{font-size:18px}
+    .introInner{grid-template-columns:42px 1fr 42px}
+    .brandLogo{width:42px; height:42px}
+  }
+
+</style>
+
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+</head>
+<body>
+  <!-- Intro (يظهر أول فتح، ثم يختفي تلقائيًا بعد 4 ثواني) -->
+  <div id="intro" class="introOverlay" style="display:none">
+    <div class="introNames" id="introNames" aria-hidden="true"></div>
+    <div class="introCard" role="dialog" aria-label="intro">
+      <div class="introInner">
+        <img class="brandLogo" src="./logo-left.png" alt="logo" />
+        <div class="brandTitleWrap">
+          <h1 class="brandTitle">تحديث مركز العمليات للصحة</h1>
+          <div class="brandSub">مستشفى ريسبكت</div>
+        </div>
+        <img class="brandLogo right" src="./logo-right.png" alt="logo" />
+      </div>
+      <div class="introHint">يختفي تلقائيًا خلال 4 ثواني — أو اضغط لإغلاقه</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="heroHeader">
+      <button id="btnHelp" class="helpBtn" type="button">شرح</button>
+      <div class="heroInner">
+        <img class="heroLogo start" src="./logo-left.png" alt="شعار" />
+        <div class="brandTitleWrap">
+          <h1 class="brandTitle">تحديث مركز العمليات للصحة</h1>
+          <div class="brandSub">مستشفى ريسبكت</div>
+        </div>
+        <img class="heroLogo end" src="./logo-right.png" alt="شعار" />
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>1) استخراج الأسماء والأكواد من صورة</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>صورة القائمة (PNG/JPG)</label>
+            <input id="imageInput" type="file" accept="image/*" style="display:none" />
+            <div class="btns" style="margin-top:0">
+              <button id="btnPickImage" class="primary">اختيار صورة</button>
+            </div>
+            <div class="pasteZone" id="pasteZone">
+              <div>
+                <b>أو الصق صورة مباشرة</b>
+                <div class="small">اضغط Ctrl+V داخل الصفحة بعد نسخ صورة (Screenshot).</div>
+              </div>
+            </div>
+
+            <div class="previewRow">
+              <img id="imgThumb" class="imgThumb" alt="preview" style="display:none" />
+              <span class="hint" id="imgHint">لم يتم اختيار صورة بعد.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button id="btnToggleCrop">قص الصورة</button>
+          <button id="btnRunOcr" class="primary">استخراج النص</button>
+          <button id="btnClearExtract">مسح القائمة</button>
+        </div>
+
+        <div class="statusline" id="ocrStatus">جاهز.</div>
+        <div class="progWrap" aria-hidden="true">
+          <div class="progCircle" id="progCircle"><div class="progInner" id="progInner">0%</div></div>
+          <div class="progText" id="progText">—</div>
+        </div>
+
+        <div class="cropWrap" id="cropWrap">
+          <div class="cropHead">
+            <h3>قصّ القائمة فقط (يزيد الدقة جدًا)</h3>
+            <div class="cropMeta" id="cropMeta">اسحب بالماوس لتحديد مستطيل حول القائمة فقط.</div>
+          </div>
+          <div class="cropArea">
+            <canvas id="cropCanvas"></canvas>
+          </div>
+          <div class="cropBtns">
+            <button id="btnApplyCrop" class="primary">تطبيق القص</button>
+            <button id="btnResetCrop">تصفير القص</button>
+            <button id="btnFitCrop">ملاءمة الصورة</button>
+          </div>
+          <div class="cropHint">نصيحة: حاول ألا تترك فراغ كبير حول القائمة. إذا لم ترد القص، اتركه بدون تحديد.</div>
+        </div>
+
+        <div style="margin-top:12px" id="tourReview">
+          <label>النص المستخرج (للمراجعة)</label>
+          <textarea id="extractedList" placeholder="سيظهر هنا: الاسم | الكود ..."></textarea>
+          <div class="btns" style="margin-top:10px">
+            <button id="btnAddExtracted" class="primary">إضافة الكل للوحة (مستشفى لوس)</button>
+            <button id="btnAddSelected">إضافة السطر المحدد</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h2>2) إعدادات التقرير</h2>
+
+        <div class="row" id="tourRecipients">
+          <div class="field">
+            <label>المستلم (الاسم | الكود)</label>
+            <input id="receiver" type="text" placeholder="محمد تبر | D-1" />
+          </div>
+          <div class="field">
+            <label>النائب (الاسم | الكود)</label>
+            <input id="deputy" type="text" placeholder="شيرو هاروتو | D-2" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:6px">
+          <div class="field small">
+            <label>المستشفيات</label>
+            <select id="useHospitals">
+              <option value="yes" selected>نعم</option>
+              <option value="no">لا</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>حالة العمليات</label>
+            <div class="toggle">
+              <div id="openSwitch" class="switch on" role="switch" aria-checked="true"></div>
+              <div class="switchLabel"><b id="openLabel">مفتوح</b> <span style="color:var(--muted)">/</span> مغلق</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="closedFields" style="display:none; margin-top:10px">
+          <div class="row">
+            <div class="field">
+              <label>تم التسجيل بواسطة</label>
+              <input id="closedBy" type="text" placeholder="اسم الشخص" />
+            </div>
+            <div class="field">
+              <label>ملاحظات (للسجل)</label>
+              <input id="closedNote" type="text" placeholder="مثال: تسجيل خروج مؤقت" />
+            </div>
+          </div>
+        </div>
+
+        <div class="btns" style="margin-top:10px">
+          <button id="btnCopy" class="primary">نسخ النموذج النهائي</button>
+          <button id="btnReset" class="danger">تصفير كل شيء</button>
+        </div>
+
+        <div style="margin-top:12px" class="row">
+          <span class="pill">🚑 في الميدان: <b id="countField">0</b></span>
+          <span class="pill">⛔ خارج الخدمة: <b id="countOff">0</b></span>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>النتيجة النهائية (قابلة للتعديل)</label>
+          <textarea id="finalText" class="big" placeholder="سيظهر هنا النموذج النهائي..."></textarea>
+          <div class="hint">يمكنك تعديل النص هنا مباشرة قبل النسخ.</div>
+        </div>
+
+        <input id="notes" type="hidden" value="تحديث" />
+      </aside>
+
+      <section class="card" style="grid-column:1 / -1">
+        <h2>3) لوحة التوزيع (سحب وإفلات)</h2>
+        <div class="hint">اسحب البطاقات بين: <span class="kbd">لوس</span> / <span class="kbd">ساندي</span> / <span class="kbd">بوليتو</span> / <span class="kbd">خارج الخدمة</span> / <span class="kbd">الأرشيف</span>. الموقع والحالة تبقى مع البطاقة.</div>
+
+        <div class="btns" style="margin-top:10px">
+          <button id="btnAddNewRow" class="primary">إضافة سطر جديد</button>
+        </div>
+
+        <div class="kanban" id="kanban"></div>
+
+        <div class="foot">
+          <div>الملاحظات في التقرير ثابتة افتراضيًا: <b>تحديث</b>.</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- Edit modal -->
+    <div id="editOverlay" class="overlay" style="display:none">
+      <div class="modal">
+        <div class="modalHead">
+          <b id="editTitle">تعديل البطاقة</b>
+          <button id="btnCloseEdit">إغلاق</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>الاسم</label>
+            <input id="editName" type="text" />
+          </div>
+          <div class="field">
+            <label>الكود</label>
+            <input id="editCode" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>المستشفى</label>
+            <select id="editHosp"></select>
+          </div>
+          <div class="field">
+            <label>الحالة</label>
+            <select id="editStatus"></select>
+          </div>
+          <div class="field">
+            <label>الموقع</label>
+            <select id="editRegion"></select>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button id="btnSaveEdit" class="primary">حفظ</button>
+          <button id="btnDeleteUnit" class="danger">حذف</button>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+
+<!-- Tour overlay -->
+<div id="tourOverlay" class="tourOverlay" aria-hidden="true">
+  <div class="tourDim"></div>
+  <div id="tourHighlight" class="tourHighlight"></div>
+
+  <div id="tourTooltip" class="tourTooltip" role="dialog" aria-label="شرح">
+    <div class="tourTop">
+      <div class="tourStep" id="tourStep">1/4</div>
+      <button id="tourClose" class="tourClose" type="button" aria-label="إغلاق">✕</button>
+    </div>
+    <h4 class="tourTitle" id="tourTitle">—</h4>
+    <p class="tourBody" id="tourBody">—</p>
+    <div class="tourBtns">
+      <button id="tourSkipStep" type="button">تخطي</button>
+      <button id="tourSkipAll" type="button" class="danger">تخطي الكل</button>
+      <button id="tourNext" type="button" class="primary">التالي</button>
+    </div>
+  </div>
+</div>
+
+  <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
